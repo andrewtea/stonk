@@ -11,7 +11,7 @@ import SwiftUI
 struct StonkApp: App {
     var body: some Scene {
         WindowGroup {
-            StonkList()
+            SinglePortfolioView()
         }
     }
 }

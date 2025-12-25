@@ -8,8 +8,14 @@
 import Foundation
 
 @Observable
-class Portfolio {
-	var holdings: [Holding] = []
+class Portfolio: Hashable {
+	var name: String
+	var holdings: [Holding]
+	
+	init(name: String, holdings: [Holding] = []) {
+		self.name = name
+		self.holdings = holdings
+	}
 	
 	var numHoldings: Int {
 		get { holdings.count }
@@ -21,5 +27,27 @@ class Portfolio {
 				.map { $0.totalPrice }
 				.reduce(0, +)
 		}
+	}
+	
+	var isEmpty: Bool {
+		get { holdings.isEmpty }
+	}
+	
+	var gains: Gains {
+		get {
+			let dollarGains = holdings
+				.map { $0.gains.dollarAmount }
+				.reduce(0, +)
+			let percentGains = dollarGains / (totalValue - dollarGains) * 100
+			return Gains(dollarAmount: dollarGains, percentAmount: percentGains)
+		}
+	}
+	
+	static func == (lhs: Portfolio, rhs: Portfolio) -> Bool {
+		lhs.name == rhs.name
+	}
+	
+	func hash(into hasher: inout Hasher) {
+		hasher.combine(name)
 	}
 }
