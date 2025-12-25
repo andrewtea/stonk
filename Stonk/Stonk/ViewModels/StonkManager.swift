@@ -5,25 +5,26 @@
 //  Created by Andrew Tang on 12/22/25.
 //
 
-import Foundation
 import Combine
+import Foundation
+import SwiftData
 
 @Observable
-class PortfolioViewModel {
+class StonkManager {
+	var context: ModelContext
 	var service: StonkService
-	var portfolioList: [Portfolio]
-	var currentPortfolio: Portfolio
 	
-	init(service: StonkService) {
+	init(context: ModelContext, service: StonkService) {
+		self.context = context
 		self.service = service
-		let firstPortfolio = Portfolio(name: "Portfolio 1")
-		self.portfolioList = [firstPortfolio]
-		self.currentPortfolio = firstPortfolio
 	}
 	
-	func addHolding(_ newHolding: Holding) {
-		guard let holding = currentPortfolio.holdings.first(where: { $0 == newHolding }) else {
-			currentPortfolio.holdings.append(newHolding)
+	func addHolding(_ newHolding: Holding, to portfolio: Portfolio) {
+		guard let holding = portfolio.holdings.first(where: { $0 == newHolding }) else {
+			portfolio.holdings.append(newHolding)
+			Task {
+				await updatePrices(for: portfolio)
+			}
 			return
 		}
 		
@@ -31,9 +32,13 @@ class PortfolioViewModel {
 		holding.numShares += newHolding.numShares
 	}
 	
-	func updatePrices() async {
+	func addPortfolio(_ newPortfolio: Portfolio) {
+		context.insert(newPortfolio)
+	}
+	
+	func updatePrices(for portfolio: Portfolio) async {
 		await withTaskGroup { group in
-			currentPortfolio.holdings.forEach { holding in
+			portfolio.holdings.forEach { holding in
 				group.addTask {
 					let price = await self.service.getSharePrice(ticker: holding.ticker)
 					await MainActor.run {

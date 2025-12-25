@@ -1,86 +1,68 @@
 //
-//  StonkList.swift
+//  HoldingsView.swift
 //  Stonk
 //
 //  Created by Andrew Tang on 12/21/25.
 //
 
 import SwiftUI
+import SwiftData
 
-struct SinglePortfolioView: View {
-	@State var viewModel: PortfolioViewModel = PortfolioViewModel(service: StonkService())
+struct HoldingsView: View {
+	@Environment(StonkManager.self) var manager
 	@State var isAddingHolding: Bool = false
-	@State var isAddingPortfolio: Bool = false
+	
+	@Bindable var portfolio: Portfolio
+	
+	@Query(sort: \Portfolio.name) var portfolioList: [Portfolio]
 	
 	var body: some View {
 		NavigationStack {
 			VStack {
-				Picker("Test", selection: $viewModel.currentPortfolio) {
-					ForEach(viewModel.portfolioList, id: \.name) { portfolio in
-						Text(portfolio.name)
-							.tag(portfolio)
-					}
-				}
-				.pickerStyle(.menu)
-				
-				HoldingListView(holdingList: $viewModel.currentPortfolio.holdings) {
-					await viewModel.updatePrices()
+				HoldingListView(holdingList: $portfolio.holdings) {
+					await manager.updatePrices(for: portfolio)
 				}
 				
 				Spacer()
 				
-				PortfolioTotalView(portfolio: viewModel.currentPortfolio)
+				HoldingsTotalView(portfolio: portfolio)
 					.padding()
 				
-				PortfolioButtonBar() { action in
-					switch action {
-					case .addPortfolio:
-						isAddingPortfolio = true
-					case .addHolding:
-						isAddingHolding = true
-					}
+				Button(action: { isAddingHolding = true }) {
+					Label("Add Holding", systemImage: "plus")
 				}
+				.buttonStyle(.borderedProminent)
 				.padding()
 			}
 		}
 		.sheet(isPresented: $isAddingHolding) {
 			AddHoldingView() { holding in
-				viewModel.addHolding(holding)
-				Task {
-					await viewModel.updatePrices()
-				}
+				manager.addHolding(holding, to: portfolio)
 				isAddingHolding.toggle()
 			}
 			.presentationDetents([.medium])
 		}
-		.sheet(isPresented: $isAddingPortfolio) {
-			AddPortfolioView() { portfolio in
-				viewModel.portfolioList.append(portfolio)
-				viewModel.currentPortfolio = portfolio
-				isAddingPortfolio.toggle()
-			}
-			.presentationDetents([.medium])
-		}
+		.navigationTitle(portfolio.name)
     }
 }
 
 struct HoldingListView: View {
 	@Binding var holdingList: [Holding]
-	let onRefresh: () async -> ()
+	let onRefresh: () async -> Void
 	
 	var body: some View {
 		if holdingList.isEmpty {
 			ContentUnavailableView {
-				Label("No holdings", systemImage: "chart.pie")
+				Label("No holdings", systemImage: "chart.bar.fill")
 			} description: {
 				Text("Tap Add Holding to start building your portfolio!")
 			}
 		} else {
-			List($holdingList, id: \.ticker, editActions: [.delete]) { $holding in
+			List($holdingList, id: \.ticker, editActions: .delete) { $holding in
 				NavigationLink {
 					HoldingDetailView(holding: holding)
 				} label: {
-					SingleHoldingView(holding: holding)
+					HoldingListItem(holding: holding)
 				}
 			}
 			.refreshable {
@@ -98,7 +80,7 @@ struct HoldingDetailView: View {
 	}
 }
 
-struct SingleHoldingView: View {
+struct HoldingListItem: View {
 	let holding: Holding
 	
 	var body: some View {
@@ -124,7 +106,7 @@ struct SingleHoldingView: View {
 			
 			VStack(alignment: .trailing) {
 				Text(holding.totalPrice.formatted(.currency(code: "USD")))
-					.font(.system(.title2, design: .serif, weight: .bold))
+					.font(.system(.title2, design: .monospaced, weight: .bold))
 				
 				GainsView(gains: holding.gains)
 			}
@@ -132,7 +114,7 @@ struct SingleHoldingView: View {
 	}
 }
 
-struct PortfolioTotalView: View {
+struct HoldingsTotalView: View {
 	let portfolio: Portfolio
 	
 	var body: some View {
@@ -149,7 +131,7 @@ struct PortfolioTotalView: View {
 			
 			VStack(alignment: .trailing) {
 				Text(portfolio.isEmpty ? "$ ---" : portfolio.totalValue.formatted(.currency(code: "USD")))
-					.font(.system(.title2, design: .serif, weight: .bold))
+					.font(.system(.title2, design: .monospaced, weight: .bold))
 				
 				GainsView(gains: portfolio.gains)
 			}
@@ -167,39 +149,14 @@ struct GainsView: View {
 			Spacer()
 			
 			Text(gains.formatForDisplay(type: .dollar))
-				.font(.caption)
+				.font(.system(.caption, design: .monospaced))
 				.foregroundStyle(color)
 			
 			Text(gains.formatForDisplay(type: .percent))
-				.font(.caption)
+				.font(.system(.caption, design: .monospaced))
 				.foregroundStyle(.white)
 				.padding(.horizontal, 2)
 				.background(RoundedRectangle(cornerRadius: 2).fill(color))
-		}
-	}
-}
-
-struct PortfolioButtonBar: View {
-	enum ButtonAction {
-		case addPortfolio
-		case addHolding
-	}
-	
-	var buttonAction: (ButtonAction) -> Void
-	
-	var body: some View {
-		HStack {
-			Button(action: { buttonAction(.addPortfolio) }) {
-				Label("Add Portfolio", systemImage: "plus")
-					.frame(maxWidth: .infinity)
-			}
-			.buttonStyle(.borderedProminent)
-			
-			Button(action: { buttonAction(.addHolding) }) {
-				Label("Add Holding", systemImage: "plus")
-					.frame(maxWidth: .infinity)
-			}
-			.buttonStyle(.borderedProminent)
 		}
 	}
 }
@@ -247,36 +204,6 @@ struct AddHoldingView: View {
 	}
 }
 
-struct AddPortfolioView: View {
-	let onPortfolioAdded: (Portfolio) -> ()
-	
-	@State var name: String = ""
-	
-	var body: some View {
-		VStack {
-			Group {
-				TextField("Portfolio name", text: $name)
-			}
-			.padding()
-			.background(
-				RoundedRectangle(cornerRadius: 10)
-					.fill(Color.gray.opacity(0.1))
-			)
-			
-			Spacer()
-			
-			Button(action: {
-				let portfolio = Portfolio(name: name)
-				onPortfolioAdded(portfolio)
-			}) {
-				Label("Add", systemImage: "plus")
-			}
-			.buttonStyle(.borderedProminent)
-		}
-		.padding()
-	}
-}
-
 #Preview {
-	SinglePortfolioView()
+	//SinglePortfolioView()
 }

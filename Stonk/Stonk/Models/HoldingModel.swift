@@ -5,10 +5,10 @@
 //  Created by Andrew Tang on 12/22/25.
 //
 
-import SwiftData
 import Foundation
+import SwiftData
 
-@Observable
+@Model
 class Holding: Hashable {
 	var ticker: String
 	var numShares: Float

@@ -6,8 +6,9 @@
 //
 
 import Foundation
+import SwiftData
 
-@Observable
+@Model
 class Portfolio: Hashable {
 	var name: String
 	var holdings: [Holding]
@@ -49,5 +50,25 @@ class Portfolio: Hashable {
 	
 	func hash(into hasher: inout Hasher) {
 		hasher.combine(name)
+	}
+}
+
+extension [Portfolio] {
+	var totalValue: Float {
+		get {
+			self
+				.map { $0.totalValue }
+				.reduce(0, +)
+		}
+	}
+	
+	var gains: Gains {
+		get {
+			let dollarGains = self
+				.map{ $0.gains.dollarAmount }
+				.reduce(0, +)
+			let percentGains = dollarGains / (totalValue - dollarGains) * 100
+			return Gains(dollarAmount: dollarGains, percentAmount: percentGains)
+		}
 	}
 }
