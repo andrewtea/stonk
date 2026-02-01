@@ -9,7 +9,7 @@ import SwiftData
 import SwiftUI
 
 struct PortfoliosView: View {
-	@State var manager: StonkManager
+	@Environment(StonkManager.self) var manager
 	@State var isAddingPortfolio: Bool = false
 	
 	var body: some View {

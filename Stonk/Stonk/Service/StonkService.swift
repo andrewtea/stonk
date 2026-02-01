@@ -8,14 +8,13 @@
 import Foundation
 
 struct StonkService {
-	let URL_BASE = "http://127.0.0.1:8000/tickers/"
+	let URL_BASE = "http://127.0.0.1:8000/"
 	
 	func getSharePrice(ticker: String) async -> Float {
-		guard let url = URL(string: "\(URL_BASE)\(ticker)") else { return 0 }
+		guard let url = URL(string: "\(URL_BASE)prices/\(ticker)") else { return 0 }
 		
 		let session = URLSession.shared
-		var request = URLRequest(url: url)
-		request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+		let request = URLRequest(url: url)
 		
 		do {
 			let (data, _) = try await session.data(for: request)
@@ -25,8 +24,30 @@ struct StonkService {
 			return 0
 		}
 	}
+	
+	func getHoldingDetails(ticker: String) async -> HoldingDetailsResponse? {
+		guard let url = URL(string: "\(URL_BASE)info/\(ticker)") else { return nil }
+		
+		let session = URLSession.shared
+		let request = URLRequest(url: url)
+		
+		do {
+			let (data, _) = try await session.data(for: request)
+			let response = try JSONDecoder().decode(HoldingDetailsResponse.self, from: data)
+			return response
+		} catch {
+			return nil
+		}
+	}
 }
 
 struct TickerResponse: Codable {
 	let price: Float
+}
+
+struct HoldingDetailsResponse: Codable {
+	let name: String
+	let description: String
+	let sector: String
+	let website: String
 }

@@ -5,6 +5,7 @@
 //  Created by Andrew Tang on 12/21/25.
 //
 
+import Kingfisher
 import SwiftUI
 import SwiftData
 
@@ -14,12 +15,13 @@ struct HoldingsView: View {
 	
 	@Bindable var portfolio: Portfolio
 	
-	@Query(sort: \Portfolio.name) var portfolioList: [Portfolio]
-	
 	var body: some View {
 		NavigationStack {
 			VStack {
-				HoldingListView(holdingList: $portfolio.holdings) {
+				HoldingListView(holdingList: $portfolio.holdings, onRefresh: {
+					await manager.updatePrices(for: portfolio)
+				})
+				.task {
 					await manager.updatePrices(for: portfolio)
 				}
 				
@@ -72,27 +74,18 @@ struct HoldingListView: View {
 	}
 }
 
-struct HoldingDetailView: View {
-	let holding: Holding
-	
-	var body: some View {
-		Text(holding.ticker)
-	}
-}
-
 struct HoldingListItem: View {
 	let holding: Holding
 	
 	var body: some View {
 		HStack(alignment: .center) {
-			AsyncImage(url: URL(string: holding.imageURL)) { image in
-				image
-					.resizable()
-					.scaledToFit()
-			} placeholder: {
-				ProgressView()
-			}
-			.frame(width: 40, height: 40)
+			KFImage(URL(string: holding.imageURL))
+				.placeholder {
+					ProgressView()
+				}
+				.resizable()
+				.scaledToFit()
+				.frame(width: 40, height: 40)
 			
 			VStack(alignment: .leading) {
 				Text(holding.ticker)

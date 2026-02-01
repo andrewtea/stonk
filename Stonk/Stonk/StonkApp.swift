@@ -16,8 +16,8 @@ struct StonkApp: App {
 		do {
 			container = try ModelContainer(for: Portfolio.self)
 			// TODO: Remove after testing
-			try container.mainContext.delete(model: Portfolio.self)
-			try container.mainContext.delete(model: Holding.self)
+//			try container.mainContext.delete(model: Portfolio.self)
+//			try container.mainContext.delete(model: Holding.self)
 		} catch {
 			fatalError()
 		}
@@ -25,8 +25,9 @@ struct StonkApp: App {
 	
     var body: some Scene {
         WindowGroup {
-			PortfoliosView(
-				manager: StonkManager(
+			PortfoliosView()
+			.environment(
+				StonkManager(
 					context: container.mainContext,
 					service: StonkService()
 				)

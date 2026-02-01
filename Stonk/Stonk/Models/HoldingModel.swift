@@ -14,6 +14,10 @@ class Holding: Hashable {
 	var numShares: Float
 	var lastPrice: Float
 	var averagePrice: Float
+	var name: String?
+	var desc: String?
+	var sector: String?
+	var website: String?
 	
 	var totalPrice: Float {
 		get { numShares * lastPrice }
@@ -77,7 +81,7 @@ struct Gains {
 		}
 		
 		if isPositive {
-			formattedAmount = "+\(formattedAmount)"
+			return "+\(formattedAmount)"
 		}
 		
 		return formattedAmount
