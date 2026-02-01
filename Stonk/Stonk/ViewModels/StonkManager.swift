@@ -51,14 +51,29 @@ class StonkManager {
 	
 	func updateHoldingDetails(for holding: Holding) async {
 		let response = await self.service.getHoldingDetails(ticker: holding.ticker)
-		
+
 		guard let response else { return }
-		
+
 		await MainActor.run {
 			holding.name = response.name
 			holding.desc = response.description
 			holding.sector = response.sector
 			holding.website = response.website
+
+			// Market data
+			holding.marketCap = response.marketCap
+			holding.peRatio = response.peRatio
+			holding.dividendYield = response.dividendYield
+			holding.beta = response.beta
+			holding.fiftyTwoWeekHigh = response.fiftyTwoWeekHigh
+			holding.fiftyTwoWeekLow = response.fiftyTwoWeekLow
+			holding.previousClose = response.previousClose
+			holding.averageVolume = response.averageVolume
+
+			// Extended company info
+			holding.industry = response.industry
+			holding.country = response.country
+			holding.employees = response.employees
 		}
 	}
 }

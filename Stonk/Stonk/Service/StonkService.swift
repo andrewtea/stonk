@@ -46,8 +46,23 @@ struct TickerResponse: Codable {
 }
 
 struct HoldingDetailsResponse: Codable {
-	let name: String
-	let description: String
-	let sector: String
-	let website: String
+	let name: String?
+	let description: String?
+	let sector: String?
+	let website: String?
+
+	// Market data
+	let marketCap: Double?
+	let peRatio: Float?
+	let dividendYield: Float?
+	let beta: Float?
+	let fiftyTwoWeekHigh: Float?
+	let fiftyTwoWeekLow: Float?
+	let previousClose: Float?
+	let averageVolume: Int?
+
+	// Extended company info
+	let industry: String?
+	let country: String?
+	let employees: Int?
 }

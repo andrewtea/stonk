@@ -18,6 +18,21 @@ class Holding: Hashable {
 	var desc: String?
 	var sector: String?
 	var website: String?
+
+	// Market data
+	var marketCap: Double?
+	var peRatio: Float?
+	var dividendYield: Float?
+	var beta: Float?
+	var fiftyTwoWeekHigh: Float?
+	var fiftyTwoWeekLow: Float?
+	var previousClose: Float?
+	var averageVolume: Int?
+
+	// Extended company info
+	var industry: String?
+	var country: String?
+	var employees: Int?
 	
 	var totalPrice: Float {
 		get { numShares * lastPrice }
@@ -37,6 +52,20 @@ class Holding: Hashable {
 			let percentGains = dollarGains / (totalPrice - dollarGains) * 100
 			return Gains(dollarAmount: dollarGains, percentAmount: percentGains)
 		}
+	}
+
+	var dailyChange: Float {
+		guard let previousClose else { return 0 }
+		return lastPrice - previousClose
+	}
+
+	var dailyChangePercent: Float {
+		guard let previousClose, previousClose > 0 else { return 0 }
+		return (dailyChange / previousClose) * 100
+	}
+
+	var dailyGains: Gains {
+		Gains(dollarAmount: dailyChange * numShares, percentAmount: dailyChangePercent)
 	}
 	
 	init(ticker: String, numShares: Float, lastPrice: Float = 0, averagePrice: Float = 0) {

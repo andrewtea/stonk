@@ -19,17 +19,19 @@ struct PortfoliosView: View {
 					// TODO: refresh
 				}
 				.environment(manager)
-				
+
 				Spacer()
-				
+
 				PortfoliosTotalView()
 					.padding()
-				
-				Button(action: { isAddingPortfolio = true }) {
-					Label("Add Portfolio", systemImage: "plus")
+			}
+			.navigationTitle("Portfolios")
+			.toolbar {
+				ToolbarItem(placement: .primaryAction) {
+					Button(action: { isAddingPortfolio = true }) {
+						Image(systemName: "plus")
+					}
 				}
-				.buttonStyle(.borderedProminent)
-				.padding()
 			}
 		}
 		.sheet(isPresented: $isAddingPortfolio) {
@@ -124,31 +126,42 @@ struct PortfoliosTotalView: View {
 }
 
 struct AddPortfolioView: View {
+	@Environment(\.dismiss) private var dismiss
+
 	let onPortfolioAdded: (Portfolio) -> ()
-	
-	@State var name: String = ""
-	
+
+	@State private var name: String = ""
+
+	private var isValid: Bool {
+		!name.isEmpty
+	}
+
 	var body: some View {
-		VStack {
-			Group {
-				TextField("Portfolio name", text: $name)
+		NavigationStack {
+			Form {
+				Section("Portfolio") {
+					TextField("Name", text: $name)
+				}
 			}
-			.padding()
-			.background(
-				RoundedRectangle(cornerRadius: 10)
-					.fill(Color.gray.opacity(0.1))
-			)
-			
-			Spacer()
-			
-			Button(action: {
-				let portfolio = Portfolio(name: name)
-				onPortfolioAdded(portfolio)
-			}) {
-				Label("Add", systemImage: "plus")
+			.scrollContentBackground(.hidden)
+			.navigationTitle("New Portfolio")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .cancellationAction) {
+					Button("Cancel") {
+						dismiss()
+					}
+				}
+
+				ToolbarItem(placement: .confirmationAction) {
+					Button("Add") {
+						let portfolio = Portfolio(name: name)
+						onPortfolioAdded(portfolio)
+					}
+					.fontWeight(.semibold)
+					.disabled(!isValid)
+				}
 			}
-			.buttonStyle(.borderedProminent)
 		}
-		.padding()
 	}
 }

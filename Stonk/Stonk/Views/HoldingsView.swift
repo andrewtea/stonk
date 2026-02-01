@@ -16,25 +16,25 @@ struct HoldingsView: View {
 	@Bindable var portfolio: Portfolio
 	
 	var body: some View {
-		NavigationStack {
-			VStack {
-				HoldingListView(holdingList: $portfolio.holdings, onRefresh: {
-					await manager.updatePrices(for: portfolio)
-				})
-				.task {
-					await manager.updatePrices(for: portfolio)
-				}
-				
-				Spacer()
-				
-				HoldingsTotalView(portfolio: portfolio)
-					.padding()
-				
-				Button(action: { isAddingHolding = true }) {
-					Label("Add Holding", systemImage: "plus")
-				}
-				.buttonStyle(.borderedProminent)
+		VStack {
+			HoldingListView(holdingList: $portfolio.holdings, onRefresh: {
+				await manager.updatePrices(for: portfolio)
+			})
+			.task {
+				await manager.updatePrices(for: portfolio)
+			}
+
+			Spacer()
+
+			HoldingsTotalView(portfolio: portfolio)
 				.padding()
+		}
+		.navigationTitle(portfolio.name)
+		.toolbar {
+			ToolbarItem(placement: .primaryAction) {
+				Button(action: { isAddingHolding = true }) {
+					Image(systemName: "plus")
+				}
 			}
 		}
 		.sheet(isPresented: $isAddingHolding) {
@@ -44,7 +44,6 @@ struct HoldingsView: View {
 			}
 			.presentationDetents([.medium])
 		}
-		.navigationTitle(portfolio.name)
     }
 }
 
@@ -132,68 +131,60 @@ struct HoldingsTotalView: View {
 	}
 }
 
-struct GainsView: View {
-	let gains: Gains
-	
-	var body: some View {
-		let color: Color = gains.isPositive ? .green : .red
-		
-		HStack {
-			Spacer()
-			
-			Text(gains.formatForDisplay(type: .dollar))
-				.font(.system(.caption, design: .monospaced))
-				.foregroundStyle(color)
-			
-			Text(gains.formatForDisplay(type: .percent))
-				.font(.system(.caption, design: .monospaced))
-				.foregroundStyle(.white)
-				.padding(.horizontal, 2)
-				.background(RoundedRectangle(cornerRadius: 2).fill(color))
-		}
-	}
-}
-
 struct AddHoldingView: View {
+	@Environment(\.dismiss) private var dismiss
+
 	let onHoldingAdded: (Holding) -> ()
-	
-	@State var ticker: String = ""
-	@State var numShares: String = ""
-	@State var averagePrice: String = ""
-	
+
+	@State private var ticker: String = ""
+	@State private var numShares: String = ""
+	@State private var averagePrice: String = ""
+
+	private var isValid: Bool {
+		!ticker.isEmpty && Float(numShares) != nil && Float(averagePrice) != nil
+	}
+
 	var body: some View {
-		VStack {
-			Group {
-				TextField("Ticker symbol", text: $ticker)
-					.keyboardType(.alphabet)
-				
-				TextField("Number of shares", text: $numShares)
-					.keyboardType(.decimalPad)
-				
-				TextField("Average price per share", text: $averagePrice)
-					.keyboardType(.decimalPad)
+		NavigationStack {
+			Form {
+				Section("Ticker") {
+					TextField("Symbol", text: $ticker)
+						.textInputAutocapitalization(.characters)
+						.autocorrectionDisabled()
+				}
+
+				Section("Position") {
+					TextField("Number of shares", text: $numShares)
+						.keyboardType(.decimalPad)
+
+					TextField("Average price per share", text: $averagePrice)
+						.keyboardType(.decimalPad)
+				}
 			}
-			.padding()
-			.background(
-				RoundedRectangle(cornerRadius: 10)
-					.fill(Color.gray.opacity(0.1))
-			)
-			
-			Spacer()
-			
-			Button(action: {
-				let holding = Holding(
-					ticker: ticker.uppercased(),
-					numShares: Float(numShares) ?? 0,
-					averagePrice: Float(averagePrice) ?? 0
-				)
-				onHoldingAdded(holding)
-			}) {
-				Label("Add", systemImage: "plus")
+			.scrollContentBackground(.hidden)
+			.navigationTitle("Add Holding")
+			.navigationBarTitleDisplayMode(.inline)
+			.toolbar {
+				ToolbarItem(placement: .cancellationAction) {
+					Button("Cancel") {
+						dismiss()
+					}
+				}
+
+				ToolbarItem(placement: .confirmationAction) {
+					Button("Add") {
+						let holding = Holding(
+							ticker: ticker.uppercased(),
+							numShares: Float(numShares) ?? 0,
+							averagePrice: Float(averagePrice) ?? 0
+						)
+						onHoldingAdded(holding)
+					}
+					.fontWeight(.semibold)
+					.disabled(!isValid)
+				}
 			}
-			.buttonStyle(.borderedProminent)
 		}
-		.padding()
 	}
 }
 

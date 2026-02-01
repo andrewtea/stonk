@@ -28,5 +28,16 @@ async def getInfo(ticker: str):
         "name": info.get("longName"),
         "description": info.get("longBusinessSummary"),
         "sector": info.get("sector"),
-        "website": info.get("website")
+        "website": info.get("website"),
+        "marketCap": info.get("marketCap"),
+        "peRatio": info.get("trailingPE"),
+        "dividendYield": info.get("dividendYield"),
+        "beta": info.get("beta"),
+        "fiftyTwoWeekHigh": info.get("fiftyTwoWeekHigh"),
+        "fiftyTwoWeekLow": info.get("fiftyTwoWeekLow"),
+        "previousClose": info.get("previousClose"),
+        "averageVolume": info.get("averageVolume"),
+        "industry": info.get("industry"),
+        "country": info.get("country"),
+        "employees": info.get("fullTimeEmployees")
     }
