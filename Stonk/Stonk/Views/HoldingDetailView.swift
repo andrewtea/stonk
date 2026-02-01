@@ -28,6 +28,8 @@ struct HoldingDetailView: View {
 			VStack(spacing: 24) {
 				HoldingHeaderView(holding: holding)
 
+				PriceChartView(ticker: holding.ticker)
+
 				PositionSectionView(holding: holding)
 
 				StatisticsSectionView(holding: holding)

@@ -76,4 +76,8 @@ class StonkManager {
 			holding.employees = response.employees
 		}
 	}
+
+	func getPriceHistory(for ticker: String, period: ChartPeriod) async -> [PricePoint]? {
+		return await service.getPriceHistory(ticker: ticker, period: period)
+	}
 }
